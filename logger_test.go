@@ -1,7 +1,7 @@
 package gormzerolog_test
 
 import (
-	gormzerolog "github.com/mpalmer/gorm-zerolog"
+	gormzerolog "github.com/leg100/gorm-zerolog"
 
 	"encoding/json"
 	"fmt"
