@@ -1,17 +1,17 @@
 package gormzerolog_test
 
 import (
-	"github.com/mpalmer/gorm-zerolog"
+	gormzerolog "github.com/mpalmer/gorm-zerolog"
 
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/rs/zerolog"
 	"testing"
 	"time"
 
-	"gorm.io/gorm"
+	"github.com/rs/zerolog"
+
 	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 type MockWriter struct {
@@ -45,13 +45,11 @@ func Test_Logger_Sqlite(t *testing.T) {
 
 	now := time.Now()
 
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{NowFunc: func() time.Time { return now }, Logger: gormzerolog.Logger{}})
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{NowFunc: func() time.Time { return now }, Logger: gormzerolog.Logger{Zlog: z}})
 
 	if err != nil {
 		panic(err)
 	}
-
-	db = db.WithContext(z.WithContext(context.Background()))
 
 	type Post struct {
 		Title, Body string
@@ -65,11 +63,11 @@ func Test_Logger_Sqlite(t *testing.T) {
 		err_ok bool
 	}{
 		{
-			run:    func() error { return db.Create(&Post{Title: "awesome"}).Error },
-			sql:    fmt.Sprintf(
-				      "INSERT INTO `posts` (`title`,`body`,`created_at`) VALUES (%q,%q,%q)",
-					  "awesome", "", now.Format("2006-01-02 15:04:05.000"),
-			        ),
+			run: func() error { return db.Create(&Post{Title: "awesome"}).Error },
+			sql: fmt.Sprintf(
+				"INSERT INTO `posts` (`title`,`body`,`created_at`) VALUES (%q,%q,%q)",
+				"awesome", "", now.Format("2006-01-02 15:04:05.000"),
+			),
 			err_ok: false,
 		},
 		{
@@ -81,10 +79,10 @@ func Test_Logger_Sqlite(t *testing.T) {
 			run: func() error {
 				return db.Where(&Post{Title: "awesome", Body: "This is awesome post !"}).First(&Post{}).Error
 			},
-			sql:    fmt.Sprintf(
-				      "SELECT * FROM `posts` WHERE `posts`.`title` = %q AND `posts`.`body` = %q ORDER BY `posts`.`title` LIMIT 1",
-				      "awesome", "This is awesome post !",
-			        ),
+			sql: fmt.Sprintf(
+				"SELECT * FROM `posts` WHERE `posts`.`title` = %q AND `posts`.`body` = %q ORDER BY `posts`.`title` LIMIT 1",
+				"awesome", "This is awesome post !",
+			),
 			err_ok: true,
 		},
 		{
